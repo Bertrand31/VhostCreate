@@ -1,0 +1,34 @@
+#!/bin/bash
+
+if [[ $EUID -ne 0 ]]; then
+	echo "Ce script doit être lancé en tant que root" 1>&2
+	exit 1
+fi
+
+if [[ $# -eq 0 ]] || [[ $# -gt 1 ]] || [[ ${#1} -lt 5 ]] || ! [[ ${1} =~ ^[a-zA-Z0-9][a-zA-Z0-9-]{1,61}[a-zA-Z0-9]\.[a-zA-Z]{2,}$ ]]; then
+	echo "Le script requiert un (seul) paramètre : un nom de domaine valide" 1>&2
+	exit 1
+fi
+
+#VARS
+APACHE_DIR="/etc/apache2/sites-available"
+TEMPLATE="${APACHE_DIR}/template"
+NDD="${1}"
+VHOST="${APACHE_DIR}/${NDD}"
+
+if [ -e ${VHOST} ]; then
+	echo -e "\nErreur : ${NDD} existe déjà\n"
+else
+	cp ${TEMPLATE} ${VHOST} || exit 1
+	sed -i "s/monbeaundd.com/${NDD}/g" ${VHOST}
+
+	echo -e "\nVHost ${NDD} créé avec succès à l'endroit suivant : ${VHOST}\n"
+
+	echo -e "Voulez-vous activer le VHost créé ?"
+	select on in "Oui" "Non"; do
+		case $on in
+			Oui ) a2ensite ${NDD}; service apache2 reload; break;;
+			Non ) break;;
+		esac
+	done
+fi
