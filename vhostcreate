@@ -27,7 +27,7 @@ else
 	echo -e "Voulez-vous activer le VHost créé ?"
 	select on in "Oui" "Non"; do
 		case $on in
-			Oui ) a2ensite ${NDD}; service apache2 reload; break;;
+			Oui ) a2ensite ${NDD}; systemctl reload apache2; break;;
 			Non ) break;;
 		esac
 	done
